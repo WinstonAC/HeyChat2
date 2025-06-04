@@ -35,23 +35,25 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="flex items-center justify-between p-6 bg-gray-800 text-white">
-      <div className="flex items-center">
-        <Link href="/" legacyBehavior>
-          <a>
-            <Image src="/logo.png" alt="HeyChat Logo" width={100} height={40} />
-          </a>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-800 p-4 shadow-md">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link href="/" className="text-xl font-bold text-white hover:text-blue-400 transition-colors">
+            HeyChat
         </Link>
-      </div>
-      <div>
-        {user ? (
-          <button onClick={handleLogout} className="mr-4">Logout</button>
-        ) : (
-          <>
-            <Link href="/login" legacyBehavior><a className="mr-4">Login</a></Link>
-            <Link href="/signup" legacyBehavior><a>Sign Up</a></Link>
-          </>
-        )}
+        <div className="space-x-4">
+          <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+            Home
+          </Link>
+          <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">
+            Profile
+          </Link>
+          <Link href="/login" className="text-gray-300 hover:text-white transition-colors">
+            Login
+          </Link>
+          <Link href="/signup" className="text-gray-300 hover:text-white transition-colors">
+            Sign Up
+          </Link>
+        </div>
       </div>
     </nav>
   );

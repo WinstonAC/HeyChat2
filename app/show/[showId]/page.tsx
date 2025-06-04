@@ -1,4 +1,4 @@
-"use client";
+\"use client\";
 
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
@@ -27,29 +27,12 @@ interface Episode {
 interface Show {
   id: string;
   title: string;
-  // Add other show properties if needed
+  // Add other show properties if needed, like poster_url if the page design needs it
 }
 
-// Helper function to convert kebab-case slug to Title Case (a simple version)
-// This might need to be more robust depending on your exact title formats.
-function slugToTitle(slug: string): string {
-  return slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+// Removed slugToTitle and getShowTitleFromSlug as showId is now used directly
 
-// Helper function to simulate a more complex title reconstruction if needed.
-// For "And Just Like That...", a simple slugToTitle won't add the ellipsis.
-// You might need a mapping or a more sophisticated slug generation/parsing if titles are complex.
-function getShowTitleFromSlug(slug: string): string {
-  if (slug === 'and-just-like-that') {
-    return 'And Just Like That...'; // Specific case for this show
-  }
-  return slugToTitle(slug); // Fallback to general conversion
-}
-
-export default function ShowPageBySlug({ params }: { params: { slug: string } }) {
+export default function ShowPageById({ params }: { params: { showId: string } }) { // Changed params.slug to params.showId
   const { showToast } = useToast();
   // State for existing data
   const [currentShow, setCurrentShow] = useState<Show | null>(null);
@@ -64,17 +47,17 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
 
-  const mockComments = [
+  const mockComments = [ // This might be for fallback if comments API is down or for episode without comments.
     {
       id: "1",
       content: "Omg that final scene?!",
-      created_at: "2024-01-01T10:00:00.000Z", // Static timestamp
+      created_at: "2024-01-01T10:00:00.000Z",
       user: { email: "demo1@heychat.com" },
     },
     {
       id: "2",
       content: "Che was finally tolerable lol.",
-      created_at: "2024-01-02T11:30:00.000Z", // Static timestamp
+      created_at: "2024-01-02T11:30:00.000Z",
       user: { email: "demo2@heychat.com" },
     },
   ];
@@ -82,38 +65,37 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
   // useEffect for initial show and episode fetching
   useEffect(() => {
     const fetchData = async () => {
-      console.log(`[ShowPageBySlug] Fetching data for slug: ${params.slug}`);
+      console.log(\`[ShowPageById] Fetching data for show ID: \${params.showId}\`); // Changed logging
       setIsLoadingInitialData(true);
-      setFetchShowError(null); 
+      setFetchShowError(null);
       setFetchEpisodesError(null);
 
-      const showTitle = getShowTitleFromSlug(params.slug);
       let fetchedShow: Show | null = null;
 
       try {
-        console.log(`[ShowPageBySlug] Fetching show with title: ${showTitle}`);
+        console.log(\`[ShowPageById] Fetching show with ID: \${params.showId}\`); // Changed logging
         const { data: showData, error: showError } = await supabase
           .from('shows')
-          .select('id, title')
-          .ilike('title', `%${showTitle}%`)
+          .select('id, title') // Consider selecting poster_url if needed by the page design
+          .eq('id', params.showId) // Changed to query by showId
           .single();
 
-        if (showError && showError.code !== 'PGRST116') {
-          console.error("[ShowPageBySlug] Error fetching show:", showError);
+        if (showError && showError.code !== 'PGRST116') { // PGRST116 means no rows found, which is handled
+          console.error("[ShowPageById] Error fetching show:", showError);
           throw showError;
         }
         
         if (!showData) {
-          const errorMsg = `Show with title matching "${showTitle}" (derived from slug "${params.slug}") not found.`;
-          console.warn("[ShowPageBySlug]", errorMsg);
+          const errorMsg = \`Show with ID \"\${params.showId}\" not found.\`; // Changed error message
+          console.warn("[ShowPageById]", errorMsg);
           setFetchShowError(errorMsg);
           showToast(errorMsg, "error");
         } else {
           fetchedShow = showData as Show;
-          console.log("[ShowPageBySlug] Show data fetched:", fetchedShow);
+          console.log("[ShowPageById] Show data fetched:", fetchedShow);
           setCurrentShow(fetchedShow);
           
-          console.log(`[ShowPageBySlug] Fetching episodes for show ID: ${fetchedShow.id}`);
+          console.log(\`[ShowPageById] Fetching episodes for show ID: \${fetchedShow.id}\`);
           const { data: episodesData, error: episodesError } = await supabase
             .from('episodes')
             .select('*')
@@ -121,80 +103,85 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
             .order('episode_number', { ascending: true });
 
           if (episodesError) {
-            console.error("[ShowPageBySlug] Error fetching episodes:", episodesError);
+            console.error("[ShowPageById] Error fetching episodes:", episodesError);
             throw episodesError;
           }
-          console.log("[ShowPageBySlug] Episodes data fetched:", episodesData);
+          console.log("[ShowPageById] Episodes data fetched:", episodesData);
           setEpisodes(episodesData || []);
         }
       } catch (err: any) {
-        console.error(`[ShowPageBySlug] Error processing show/episodes for slug "${params.slug}":`, err);
+        console.error(\`[ShowPageById] Error processing show/episodes for show ID \"\${params.showId}\":\`, err); // Changed error message
         if (!fetchShowError) { 
             const specificEpisodeError = err.message || 'An unexpected error occurred while fetching episodes.';
             setFetchEpisodesError(specificEpisodeError);
             showToast(specificEpisodeError, "error");
-        } else {
-            // If fetchShowError is already set, that means the primary error was show fetching.
-            // The toast for fetchShowError would have already been shown or will be handled by the main error display.
         }
       } finally {
-        console.log("[ShowPageBySlug] Finished initial data fetch. Setting isLoadingInitialData to false.");
+        console.log("[ShowPageById] Finished initial data fetch. Setting isLoadingInitialData to false.");
         setIsLoadingInitialData(false);
       }
     };
-    fetchData();
-  }, [params.slug]);
+    if (params.showId) { // Ensure showId is present before fetching
+        fetchData();
+    } else {
+        console.warn("[ShowPageById] showId is missing, cannot fetch data.");
+        setFetchShowError("Show ID is missing. Cannot load page.");
+        setIsLoadingInitialData(false);
+    }
+  }, [params.showId]); // Changed dependency to params.showId
 
   // useEffect for user and comments
   useEffect(() => {
     const fetchUserAndComments = async () => {
-      console.log("[ShowPageBySlug] Fetching user and comments. Current show:", currentShow);
+      console.log("[ShowPageById] Fetching user and comments. Current show:", currentShow);
       const { data: userData } = await supabase.auth.getUser();
-      console.log("[ShowPageBySlug] User data:", userData.user);
+      console.log("[ShowPageById] User data:", userData.user);
       setUser(userData.user);
 
       if (currentShow && currentShow.id) {
         try {
-          console.log(`[ShowPageBySlug] Fetching comments for show ID: ${currentShow.id}`);
+          console.log(\`[ShowPageById] Fetching comments for show ID: \${currentShow.id}\`);
+          // This page seems to fetch comments by 'show_id'.
+          // The more detailed episode page fetches comments by 'episode_id'.
+          // This distinction is maintained from the original [slug]/page.tsx.
           const { data: commentsData, error: commentsError } = await supabase
             .from("comments")
             .select("id, content, created_at, user:users(email)") 
-            .eq("show_id", currentShow.id)
+            .eq("show_id", currentShow.id) 
             .order("created_at", { ascending: false });
 
           if (commentsError || !commentsData || commentsData.length === 0) { 
-            console.warn("[ShowPageBySlug] Error fetching comments or no comments found, using fallback comments. Error:", commentsError, "Data:", commentsData);
+            console.warn("[ShowPageById] Error fetching comments or no comments found, using fallback comments. Error:", commentsError, "Data:", commentsData);
             setComments(mockComments);
           } else {
-            console.log("[ShowPageBySlug] Comments data fetched:", commentsData);
+            console.log("[ShowPageById] Comments data fetched:", commentsData);
             setComments(commentsData);
           }
         } catch (err) {
-          console.error("[ShowPageBySlug] Critical error fetching comments, using fallback:", err);
+          console.error("[ShowPageById] Critical error fetching comments, using fallback:", err);
           showToast("Could not load comments.", "error");
           setComments(mockComments);
         }
       } else if (!currentShow && !isLoadingInitialData) { 
-        console.warn("[ShowPageBySlug] No current show data (and not loading), using fallback comments for offline/error scenario.");
+        console.warn("[ShowPageById] No current show data (and not loading), using fallback comments for offline/error scenario.");
         setComments(mockComments);
       }
     };
 
-    // Initial fetch for user and comments if currentShow is already available
-    if (currentShow) { // This condition ensures fetchUserAndComments runs if currentShow is set
+    if (currentShow) {
         fetchUserAndComments();
-    } else if (!isLoadingInitialData) { // If not loading and no show, potentially use mocks
-        console.log("[ShowPageBySlug] No current show and not loading initial data, running fetchUserAndComments to potentially set mock comments.");
-        fetchUserAndComments(); // Call to set mock comments if show is not found path.
+    } else if (!isLoadingInitialData) {
+        console.log("[ShowPageById] No current show and not loading initial data, running fetchUserAndComments to potentially set mock comments.");
+        fetchUserAndComments();
     }
     
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("[ShowPageBySlug] Auth state changed:", event, "Session user:", session?.user);
+        console.log("[ShowPageById] Auth state changed:", event, "Session user:", session?.user);
         setUser(session?.user ?? null);
         if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
             if (currentShow && currentShow.id) {
-                 console.log("[ShowPageBySlug] User signed in/out, re-fetching comments.");
+                 console.log("[ShowPageById] User signed in/out, re-fetching comments.");
                  fetchUserAndComments(); 
             }
         }
@@ -202,10 +189,10 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
     );
 
     return () => {
-      console.log("[ShowPageBySlug] Unsubscribing from auth listener.");
+      console.log("[ShowPageById] Unsubscribing from auth listener.");
       authListener?.subscription.unsubscribe();
     };
-  }, [currentShow, isLoadingInitialData]); // Added isLoadingInitialData to re-evaluate if show loading failed
+  }, [currentShow, isLoadingInitialData]);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,14 +205,13 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
     const { error } = await supabase.from("comments").insert({
       content: newComment.trim(),
       user_id: user.id,
-      show_id: currentShow.id,
+      show_id: currentShow.id, // This links comment to the show.
     });
 
     if (!error) {
       setNewComment("");
       showToast("Comment posted successfully!", "success");
-      // Re-fetch comments to update the list
-      console.log("[ShowPageBySlug] Comment posted, re-fetching comments.");
+      console.log("[ShowPageById] Comment posted, re-fetching comments.");
       const { data: updatedComments, error: fetchError } = await supabase
         .from("comments")
         .select("id, content, created_at, user:users(email)")
@@ -239,7 +225,7 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
       }
     } else {
       console.error("Error posting comment:", error);
-      showToast(`Error posting comment: ${error.message}`, "error");
+      showToast(\`Error posting comment: \${error.message}\`, "error");
     }
     setCommentLoading(false);
   };
@@ -262,13 +248,11 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
     );
   }
   
-  // If currentShow is null here, it implies the show wasn't found even if no specific 'PGRST116' error was caught for showError.
-  // This check is somewhat redundant due to fetchShowError but adds explicitness.
   if (!currentShow && !isLoadingInitialData) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold text-red-500 mb-4">Show Not Found</h1>
-        <p>The show you're looking for (slug: "{params.slug}") could not be found.</p>
+        <p>The show you\\'re looking for (ID: \"{params.showId}\") could not be found.</p> {/* Changed params.slug to params.showId */}
         <Link href="/" legacyBehavior><a className="text-blue-500 hover:underline mt-4 inline-block">Go back to homepage</a></Link>
       </div>
     );
@@ -276,8 +260,9 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-2">{currentShow.title}</h1>
-      <p className="text-sm text-gray-400 mb-6">Slug: {params.slug}</p>
+      {/* Ensure currentShow is not null before trying to access its properties */}
+      <h1 className="text-4xl font-bold mb-2">{currentShow?.title || 'Show Title'}</h1>
+      <p className="text-sm text-gray-400 mb-6">Show ID: {params.showId}</p> {/* Changed from Slug to Show ID */}
 
       <h2 className="text-3xl font-semibold mb-4">Episodes</h2>
       {fetchEpisodesError && <p className="text-red-500">Error loading episodes: {fetchEpisodesError}</p>}
@@ -290,7 +275,7 @@ export default function ShowPageBySlug({ params }: { params: { slug: string } })
             <div key={episode.id} className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-xl font-bold mb-2 text-purple-400">Ep. {episode.episode_number}: {episode.title}</h3>
               <p className="text-sm text-gray-400 mb-2">Air Date: {formatDate(episode.air_date)}</p>
-              {/* <p className="text-gray-300">{episode.description}</p> */}
+              {/* <p className="text-gray-300\">{episode.description}</p> */}
             </div>
           ))}
         </div>
