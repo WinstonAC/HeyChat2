@@ -5,19 +5,43 @@ import { useParams } from 'next/navigation';
 import CommentList from '@/components/CommentList';
 import CommentInput from '@/components/CommentInput';
 import type { Episode } from '@/lib/types';
-// Supabase client and User type are no longer directly needed here for comment auth
+import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
-// Placeholder for fetching specific episode details (e.g., title)
-async function fetchEpisodeDetails(episodeId: string): Promise<Partial<Episode> | null> {
+// Helper function for formatting dates safely
+const formatDate = (input?: string, options?: Intl.DateTimeFormatOptions) => {
+  if (!input) return "N/A";
+  const d = new Date(input);
+  if (isNaN(d.getTime())) {
+    console.warn("Invalid date input for formatDate:", input);
+    return "Invalid Date";
+  }
+  return options ? d.toLocaleString(undefined, options) : d.toLocaleDateString();
+};
+
+async function fetchEpisodeDetails(episodeId: string): Promise<Episode | null> {
   try {
-    console.warn('fetchEpisodeDetails is a placeholder. Implement actual API call for episode title and metadata.');
-    return {
-      id: episodeId,
-      title: "Episode Title (Placeholder)", // Replace with actual fetched title
-      // season_number and episode_number might also come from here if not from params directly for display
-    };
+    console.log(`[fetchEpisodeDetails] Fetching details for episodeId: ${episodeId}`);
+    const { data, error, status } = await supabase
+      .from('episodes')
+      .select('id, episode_number, title, description, air_date')
+      .eq('id', episodeId)
+      .single();
+
+    if (error && status !== 406) {
+      console.error(`[fetchEpisodeDetails] Supabase error fetching episode ${episodeId}:`, error);
+      throw error;
+    }
+
+    if (!data) {
+      console.warn(`[fetchEpisodeDetails] No episode found with id: ${episodeId}`);
+      return null;
+    }
+
+    console.log(`[fetchEpisodeDetails] Fetched episode details:`, data);
+    return data as Episode;
   } catch (error) {
-    console.error(`Failed to fetch episode details for ${episodeId}:`, error);
+    console.error(`[fetchEpisodeDetails] Failed to fetch episode details for ${episodeId}:`, error);
     return null;
   }
 }
@@ -34,7 +58,7 @@ export default function EpisodeConversationPage() {
 
   console.log('EpisodeConversationPage params:', { showId, seasonNumberStr, seasonNumber, episodeId }); // Added for debugging
 
-  const [episodeDetails, setEpisodeDetails] = useState<Partial<Episode> | null>(null);
+  const [episodeDetails, setEpisodeDetails] = useState<Episode | null>(null);
   const [loadingEpisode, setLoadingEpisode] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   
@@ -64,7 +88,6 @@ export default function EpisodeConversationPage() {
       try {
         const details = await fetchEpisodeDetails(episodeId);
         setEpisodeDetails(details);
-        // Removed direct fetching of Supabase user from this page component
       } catch (err) {
         console.error("Error loading page data:", err);
         setPageError(err instanceof Error ? err.message : 'Error fetching episode page data');
@@ -73,8 +96,6 @@ export default function EpisodeConversationPage() {
     };
 
     fetchInitialPageData();
-    // Removed Supabase auth listener as CommentInput now takes author directly
-
   }, [episodeId, showId, seasonNumberStr, seasonNumber]); // Added all relevant params as dependencies
 
   const handleCommentPosted = () => {
@@ -89,7 +110,6 @@ export default function EpisodeConversationPage() {
     );
   }
 
-  // Check for missing IDs or errors after loading attempt
   if (!episodeId || !showId || isNaN(seasonNumber)) {
      return (
         <div className="container mx-auto px-4 py-8">
@@ -98,6 +118,9 @@ export default function EpisodeConversationPage() {
             <p className="text-sm text-red-200">
                 {pageError || "Required information (Show ID, Season Number, or Episode ID) is missing or invalid in the URL."}
             </p>
+            <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</a></Link>
+            {' | '}
+            <Link href="/" legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Go Home</a></Link>
             </div>
         </div>
         );
@@ -107,8 +130,25 @@ export default function EpisodeConversationPage() {
      return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center p-4 bg-red-900 border border-red-700 rounded-md">
-          <p className="text-xl text-white">Error loading page content:</p>
+          <p className="text-xl text-white">Error loading episode content:</p>
           <p className="text-sm text-red-200">{pageError}</p>
+          <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</a></Link>
+           {' | '}
+          <Link href="/" legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Go Home</a></Link>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!loadingEpisode && !episodeDetails && !pageError) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold text-yellow-400 mb-4">Episode Not Found</h1>
+        <p className="text-gray-300">The episode you are looking for (ID: {episodeId}) could not be found.</p>
+        <div className="mt-4">
+          <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-500 hover:underline">Back to Show Details</a></Link>
+          {' | '}
+          <Link href="/" legacyBehavior><a className="text-blue-500 hover:underline ml-2">Go to Homepage</a></Link>
         </div>
       </div>
     );
@@ -117,17 +157,36 @@ export default function EpisodeConversationPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {episodeDetails ? (
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {episodeDetails.title || 'Episode Discussion'}
-        </h1>
+        <>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {episodeDetails.title || 'Episode Title Not Available'}
+          </h1>
+          <div className="text-sm text-gray-400 mb-1">
+            <span>Season {seasonNumber}, Episode {episodeDetails.episode_number || 'N/A'}</span>
+            {episodeDetails.air_date && (
+              <span className="ml-2 pl-2 border-l border-gray-600">
+                Aired: {formatDate(episodeDetails.air_date, { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+          {episodeDetails.description && (
+            <p className="text-gray-300 mt-2 mb-6 whitespace-pre-line">
+              {episodeDetails.description}
+            </p>
+          )}
+        </>
       ) : (
          <h1 className="text-3xl font-bold text-white mb-2">
-          Episode Discussion (Title not loaded)
+          Episode Discussion
         </h1>
       )}
-      <p className="text-sm text-gray-400 mb-1">Show ID: {showId}</p>
-      <p className="text-sm text-gray-400 mb-1">Season: {seasonNumber}</p>
-      <p className="text-sm text-gray-400 mb-6">Episode ID: {episodeId}</p>
+      {(!episodeDetails?.title) && (
+         <>
+            <p className="text-sm text-gray-400 mb-1">Show ID: {showId}</p>
+            <p className="text-sm text-gray-400 mb-1">Season: {seasonNumber}</p>
+            <p className="text-sm text-gray-400 mb-6">Episode ID: {episodeId}</p>
+         </>
+      )}
       
       {pageError && episodeDetails && (
         <div className="my-4 p-3 bg-yellow-800 border border-yellow-600 rounded-md">
@@ -148,9 +207,9 @@ export default function EpisodeConversationPage() {
 
       <CommentInput 
         showId={showId}
-        seasonNumber={seasonNumber} // Pass the parsed number
+        seasonNumber={seasonNumber}
         episodeId={episodeId} 
-        author={hardcodedAuthor} // Pass hardcoded author
+        author={hardcodedAuthor}
         onCommentPosted={handleCommentPosted} 
       />
     </div>

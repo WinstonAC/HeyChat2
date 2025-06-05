@@ -1,77 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import ShowCard from '@/components/ShowCard';
-import type { Show } from '@/lib/types';
-
-async function fetchShows(): Promise<Show[]> {
-  try {
-    const response = await fetch('/api/shows');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.shows || []; // Assuming the API returns { shows: [...] }
-  } catch (error) {
-    console.error("Failed to fetch shows:", error);
-    return []; // Return empty array on error
-  }
-}
+import Link from 'next/link';
 
 export default function HomePage() {
-  const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadShows = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedShows = await fetchShows();
-        setShows(fetchedShows);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        console.error(err);
-      }
-      setLoading(false);
-    };
-    loadShows();
-  }, []);
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center text-white">Explore TV Shows</h1>
-      
-      {loading && (
-        <div className="text-center">
-          <p className="text-xl text-gray-400">Loading shows...</p>
-          {/* You can add a spinner component here */}
-        </div>
-      )}
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center text-center px-4">
+      <header className="mb-12">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+          Welcome to <span className="text-blue-500">HeyChat</span>
+        </h1>
+        <p className="mt-4 text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
+          Discover, discuss, and dive deep into your favorite TV shows. Join the conversation and never miss a moment.
+        </p>
+      </header>
 
-      {error && (
-        <div className="text-center p-4 bg-red-900 border border-red-700 rounded-md">
-          <p className="text-xl text-white">Error loading shows:</p>
-          <p className="text-sm text-red-200">{error}</p>
-          <p className="text-sm text-red-200 mt-2">Make sure your API endpoint at /api/shows is running and returning the correct data structure.</p>
-        </div>
-      )}
+      <main className="mb-12">
+        <p className="text-md md:text-lg text-gray-300 mb-8 max-w-xl mx-auto">
+          HeyChat is your ultimate companion for tracking episodes, sharing insights, and connecting with fellow fans. 
+          Explore a vast library of shows and find your next binge-watch obsession.
+        </p>
+        <Link href="/shows" legacyBehavior>
+          <a className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out transform hover:scale-105">
+            Browse Shows
+          </a>
+        </Link>
+      </main>
 
-      {!loading && !error && shows.length === 0 && (
-        <div className="text-center">
-          <p className="text-xl text-gray-400">No shows found.</p>
-          <p className="text-sm text-gray-500">Check if the API is returning any shows or if there's an issue with the data.</p>
-        </div>
-      )}
-
-      {!loading && !error && shows.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {shows.map((show) => (
-            <ShowCard key={show.id} show={show} />
-          ))}
-        </div>
-      )}
+      <footer className="mt-auto py-8">
+        <p className="text-gray-500 text-sm">
+          &copy; {new Date().getFullYear()} HeyChat. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 } 
