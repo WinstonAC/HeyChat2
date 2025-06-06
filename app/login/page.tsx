@@ -2,29 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    console.log('Login attempt with:', { email, password });
-    // Placeholder for Supabase email login logic
-    // try {
-    //   // const { error } = await supabase.auth.signInWithPassword({ email, password });
-    //   // if (error) throw error;
-    //   // router.push('/profile'); // Redirect to profile or home on success
-    // } catch (err: any) {
-    //   setError(err.message || 'Failed to login. Please check your credentials.');
-    // }
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    setError('Login functionality will be wired to Supabase later.');
-    setIsLoading(false);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      router.push('/shows'); // Redirect to shows on success
+    } catch (err: any) {
+      setError(err.message || 'Failed to login. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

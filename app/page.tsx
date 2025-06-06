@@ -1,36 +1,22 @@
 'use client';
 
 import Link from 'next/link';
+import { Tv } from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center text-center px-4">
-      <header className="mb-12">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-          Welcome to <span className="text-blue-500">HeyChat</span>
+    <div className="min-h-[calc(100vh-4rem)] bg-black flex flex-col items-center justify-center text-center px-4">
+      <main className="flex flex-col items-center justify-center flex-grow">
+        <Tv className="w-24 h-24 text-purple-400" />
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mt-6">
+          HEY CHAT
         </h1>
-        <p className="mt-4 text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-          Discover, discuss, and dive deep into your favorite TV shows. Join the conversation and never miss a moment.
-        </p>
-      </header>
-
-      <main className="mb-12">
-        <p className="text-md md:text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-          HeyChat is your ultimate companion for tracking episodes, sharing insights, and connecting with fellow fans. 
-          Explore a vast library of shows and find your next binge-watch obsession.
-        </p>
-        <Link href="/shows" legacyBehavior>
-          <a className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out transform hover:scale-105">
+        <div className="mt-8">
+          <Link href="/shows" className="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
             Browse Shows
-          </a>
-        </Link>
+          </Link>
+        </div>
       </main>
-
-      <footer className="mt-auto py-8">
-        <p className="text-gray-500 text-sm">
-          &copy; {new Date().getFullYear()} HeyChat. All rights reserved.
-        </p>
-      </footer>
     </div>
   );
 } 

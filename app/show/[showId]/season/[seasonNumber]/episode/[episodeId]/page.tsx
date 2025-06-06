@@ -118,9 +118,9 @@ export default function EpisodeConversationPage() {
             <p className="text-sm text-red-200">
                 {pageError || "Required information (Show ID, Season Number, or Episode ID) is missing or invalid in the URL."}
             </p>
-            <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</a></Link>
+            <Link href={`/show/${showId || ''}`} className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</Link>
             {' | '}
-            <Link href="/" legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Go Home</a></Link>
+            <Link href="/" className="text-blue-300 hover:underline mt-2 inline-block">Go Home</Link>
             </div>
         </div>
         );
@@ -132,9 +132,9 @@ export default function EpisodeConversationPage() {
         <div className="text-center p-4 bg-red-900 border border-red-700 rounded-md">
           <p className="text-xl text-white">Error loading episode content:</p>
           <p className="text-sm text-red-200">{pageError}</p>
-          <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</a></Link>
+          <Link href={`/show/${showId || ''}`} className="text-blue-300 hover:underline mt-2 inline-block">Back to Show</Link>
            {' | '}
-          <Link href="/" legacyBehavior><a className="text-blue-300 hover:underline mt-2 inline-block">Go Home</a></Link>
+          <Link href="/" className="text-blue-300 hover:underline mt-2 inline-block">Go Home</Link>
         </div>
       </div>
     );
@@ -146,9 +146,9 @@ export default function EpisodeConversationPage() {
         <h1 className="text-2xl font-bold text-yellow-400 mb-4">Episode Not Found</h1>
         <p className="text-gray-300">The episode you are looking for (ID: {episodeId}) could not be found.</p>
         <div className="mt-4">
-          <Link href={`/show/${showId || ''}`} legacyBehavior><a className="text-blue-500 hover:underline">Back to Show Details</a></Link>
+          <Link href={`/show/${showId || ''}`} className="text-blue-500 hover:underline">Back to Show Details</Link>
           {' | '}
-          <Link href="/" legacyBehavior><a className="text-blue-500 hover:underline ml-2">Go to Homepage</a></Link>
+          <Link href="/" className="text-blue-500 hover:underline ml-2">Go to Homepage</Link>
         </div>
       </div>
     );

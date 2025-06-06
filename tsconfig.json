@@ -9,21 +9,46 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "outDir": "dist_script",
     "noEmit": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": false
+    "declaration": false,
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "strict": false,
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",
     "compilerOptions": {
-        "module": "NodeNext"
+      "module": "NodeNext"
     }
   },
-  "include": ["scripts/**/*.ts", "lib/**/*.ts"],
-  "exclude": ["node_modules", ".next", "dist_script"]
+  "include": [
+    "lib/**/*.ts",
+    "scripts/**/*.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist_script"
+  ]
 }

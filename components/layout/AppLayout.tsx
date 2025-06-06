@@ -20,7 +20,7 @@ export default function AppLayout({
   showBackButtonInHeader = false,
 }: AppLayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+    <div className="flex flex-col min-h-screen bg-black text-white">
       {showHeader && <Header title={headerTitle} showBack={showBackButtonInHeader} />}
       <main 
         className={`flex-grow 

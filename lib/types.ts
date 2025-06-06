@@ -8,6 +8,8 @@ export interface Show {
 export interface Episode {
   id: string;
   title: string;
+  description: string;
+  air_date: string;
   season_number: number;
   episode_number: number;
   // Add other episode properties as needed
