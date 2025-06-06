@@ -73,7 +73,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
     <form onSubmit={handleSubmit} className="mt-6 mb-8">
       <h3 className="text-xl font-semibold text-white mb-3">Leave a Comment</h3>
       <textarea
-        className="w-full p-3 bg-gray-700 text-gray-200 rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out disabled:bg-gray-600"
+        className="w-full p-3 bg-gray-700 text-gray-200 rounded-md border border-gray-600 focus:ring-2 focus:ring-accent focus:border-accent transition duration-150 ease-in-out disabled:bg-gray-600"
         rows={4}
         placeholder={author && author !== "Anonymous" ? `Commenting as ${author}...` : "Write your comment here..."}
         value={commentText}
@@ -87,7 +87,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
       <button
         type="submit"
         disabled={isSubmitting || !commentText.trim() || !author} 
-        className="mt-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out"
+        className="mt-3 px-6 py-2 bg-accent hover:bg-accent-hover text-black font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out"
       >
         {isSubmitting ? 'Posting...' : 'Post Comment'}
       </button>

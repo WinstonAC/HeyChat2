@@ -1,7 +1,8 @@
 export interface Show {
   id: string;
   title: string;
-  poster_url: string;
+  poster_url?: string;
+  season_count?: number;
   // Add other show properties as needed
 }
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import type { Show, Episode } from '@/lib/types';
-import AppLayout from '@/components/layout/AppLayout';
+import EpisodeCard from '@/components/cards/EpisodeCard';
+import Loading from '@/components/common/Loading';
 
 export default function ShowPage({ params }: { params: { showId: string } }) {
   const { showId } = params;
@@ -52,41 +52,25 @@ export default function ShowPage({ params }: { params: { showId: string } }) {
   }, [showId]);
 
   if (loading) {
-    return (
-      <AppLayout showHeader={true} headerTitle="Loading..." showBack={true}>
-        <p className="text-center">Loading show details...</p>
-      </AppLayout>
-    );
+    return <Loading />;
   }
 
   if (error || !show) {
-    return (
-      <AppLayout showHeader={true} headerTitle="Error" showBack={true}>
-        <p className="text-center text-red-500">{error || 'Show not found.'}</p>
-      </AppLayout>
-    );
+    return <p className="text-center text-red-500">{error || 'Show not found.'}</p>;
   }
 
   return (
-    <AppLayout showHeader={true} headerTitle={show.title} showBack={true}>
-      <div className="p-4">
-        <h2 className="text-2xl font-bold mb-4">Episodes</h2>
-        {episodes.length > 0 ? (
-          <div className="space-y-3">
-            {episodes.map((episode) => (
-              <Link
-                key={episode.id}
-                href={`/show/${showId}/season/${episode.season_number}/episode/${episode.id}`}
-                className="block p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <h3 className="text-lg font-semibold">S{episode.season_number}E{episode.episode_number}: {episode.title}</h3>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p>No episodes found for this show.</p>
-        )}
-      </div>
-    </AppLayout>
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4">Episodes</h2>
+      {episodes.length > 0 ? (
+        <div className="space-y-3">
+          {episodes.map((episode) => (
+            <EpisodeCard key={episode.id} episode={episode} showId={showId} />
+          ))}
+        </div>
+      ) : (
+        <p>No episodes found for this show.</p>
+      )}
+    </div>
   );
 } 

@@ -8,6 +8,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        accent: {
+          DEFAULT: "#D9BFFF",
+          hover: "#C8A9FF", // A slightly darker shade for hover
+        },
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":

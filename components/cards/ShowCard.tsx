@@ -28,9 +28,12 @@ const ShowCard: React.FC<ShowCardProps> = ({ show }) => {
           )}
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+          <h3 className="text-lg font-semibold text-white truncate group-hover:text-accent transition-colors">
             {show.title}
           </h3>
+          <p className="text-sm text-gray-400 mt-1">
+            {show.season_count ? `${show.season_count} Seasons` : 'Seasons not available'}
+          </p>
         </div>
       </div>
     </Link>

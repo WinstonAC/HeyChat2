@@ -1,6 +1,6 @@
 'use client';
 
-import type { Comment as CommentType } from '@/lib/types';
+import type { Comment as CommentType } from '../../lib/types';
 
 interface CommentProps {
   comment: CommentType;
@@ -26,7 +26,7 @@ const Comment: React.FC<CommentProps> = ({ comment }) => {
         {/* Placeholder for user avatar */}
         <div className={`w-8 h-8 rounded-full bg-gray-600 ${avatarMarginClass} flex-shrink-0`}></div>
         {/* Use comment.author from the new schema */}
-        <h5 className={`font-semibold text-blue-400`}>{comment.author || 'Anonymous'}</h5> 
+        <h5 className={`font-semibold text-accent`}>{comment.author || 'Anonymous'}</h5> 
       </div>
       {/* Use comment.text from the new schema */}
       <p className={`text-gray-300 whitespace-pre-wrap ${textAlignClass}`}>{comment.text}</p>

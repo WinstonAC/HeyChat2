@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import CommentList from '@/components/CommentList';
-import CommentInput from '@/components/CommentInput';
+import CommentList from '@/components/comments/CommentList';
+import CommentInput from '@/components/comments/CommentInput';
 import type { Episode } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
+import Loading from '@/components/common/Loading';
 
 // Helper function for formatting dates safely
 const formatDate = (input?: string, options?: Intl.DateTimeFormatOptions) => {
@@ -103,11 +104,7 @@ export default function EpisodeConversationPage() {
   };
 
   if (loadingEpisode) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-xl text-gray-400">Loading episode discussion...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!episodeId || !showId || isNaN(seasonNumber)) {

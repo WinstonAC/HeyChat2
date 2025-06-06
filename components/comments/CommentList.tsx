@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Comment from './Comment';
-import type { Comment as CommentType } from '@/lib/types';
-import { supabase } from '@/lib/supabaseClient';
+import type { Comment as CommentType } from '../../lib/types';
+import { supabase } from '../../lib/supabaseClient';
+import Loading from '../common/Loading';
 
 interface CommentListProps {
   showId: string;
@@ -57,7 +58,7 @@ const CommentList: React.FC<CommentListProps> = ({ showId, seasonNumber, episode
   }, [showId, seasonNumber, episodeId, refreshTrigger]);
 
   if (loading) {
-    return <p className="text-gray-400 italic my-4">Loading comments...</p>;
+    return <Loading />;
   }
 
   if (error) {

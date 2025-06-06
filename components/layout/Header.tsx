@@ -1,30 +1,38 @@
 'use client';
 
 import { ChevronLeft, LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '../AuthProvider';
+import { supabase } from '../../lib/supabaseClient';
 
-interface HeaderProps {
-  title: string;
-  showBack?: boolean;
-}
-
-export default function Header({ title, showBack = false }: HeaderProps) {
+export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
   };
+  
+  // Determine header properties based on path
+  const isSubPage = pathname.startsWith('/show/') || pathname.startsWith('/profile');
+  let title = 'HeyChat';
+  if (pathname === '/shows') {
+    title = 'Browse Shows';
+  } else if (isSubPage) {
+    // This is a simplification. A real app might use a global state
+    // or context to set the title from the page component itself.
+    title = "Details";
+  }
+
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 bg-gray-800 shadow-md text-white">
       <div className="flex items-center">
-        {showBack ? (
+        {isSubPage ? (
           <>
             <button 
               onClick={() => router.back()} 
@@ -39,7 +47,7 @@ export default function Header({ title, showBack = false }: HeaderProps) {
           <Link href="/">
             <div className="flex items-center gap-2">
               <Image src="/HeyChat.png" alt="HeyChat logo" width={32} height={32} />
-              <span className="text-lg font-bold">HeyChat</span>
+              <span className="text-lg font-bold">{title}</span>
             </div>
           </Link>
         )}
