@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
+import { useToast } from '../../hooks/useToast';
 // User type from @supabase/supabase-js is no longer needed here
 
 interface CommentInputProps {
@@ -22,6 +23,7 @@ const CommentInput: React.FC<CommentInputProps> = ({
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   // Removed useState for currentUser and the useEffect that fetched it and listened to auth changes.
   // The 'author' prop is now the source of truth for who is posting.
@@ -59,7 +61,8 @@ const CommentInput: React.FC<CommentInputProps> = ({
       }
 
       setCommentText(''); 
-      onCommentPosted();  
+      onCommentPosted();
+      showToast('Comment posted successfully!', 'success');
 
     } catch (err) {
       console.error("Failed to post comment:", err);

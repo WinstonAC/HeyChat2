@@ -32,7 +32,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "strictNullChecks": true
   },
   "ts-node": {
     "esm": true,
@@ -42,13 +43,12 @@
     }
   },
   "include": [
-    "lib/**/*.ts",
-    "scripts/**/*.ts",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    ".next",
-    "dist_script"
+    "node_modules"
   ]
 }

@@ -2,12 +2,13 @@ export interface Show {
   id: string;
   title: string;
   poster_url?: string;
-  season_count?: number;
-  // Add other show properties as needed
+  description?: string;
+  platform?: string;
 }
 
 export interface Episode {
   id: string;
+  show_id: string;
   title: string;
   description: string;
   air_date: string;
@@ -17,11 +18,41 @@ export interface Episode {
 }
 
 export interface Comment {
-  id: string; // uuid, default in Supabase, but string in TS
-  show_id: string;
-  season_number: number;
+  id: string;
+  content: string;
+  likes_count: number;
+  created_at: string;
+  show_id?: string;
+  episode_id?: string;
+  author: UserProfile;
+  source_type?: string;
+  source_url?: string;
+  parent_id?: string;
+  pinned: boolean;
+  saved_by: string[];
+  ingested: boolean;
+  relevance_score: number;
+  replies?: Comment[];
+}
+
+export interface UserProfile {
+  user_id: string;
+  name: string;
+  handle: string;
+  avatar_url: string;
+}
+
+export interface Thread {
+  id: string;
+  title: string;
+  url: string;
+  created_at: string;
   episode_id: string;
-  text: string;
-  author: string;
-  created_at: string; // Supabase timestampz typically comes as string
+  author: UserProfile;
+}
+
+export interface Author {
+  name: string;
+  handle: string;
+  avatar_url: string;
 } 

@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
+import React, { useState } from 'react';
 import { Heart, MessageCircle, MoreHorizontal, Share2, Pin, Bookmark } from 'lucide-react';
-import { FaReddit, FaTiktok, FaTwitter, FaYoutube, FaPodcast } from 'react-icons/fa';
 import type { Comment } from '@/lib/types';
 import { timeAgo } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 import { useRouter } from 'next/navigation';
+import { Card } from '../ui/Card';
+import { Badge } from '../ui/Badge';
+import { Avatar } from '../ui/Avatar';
 
 interface CommentCardProps {
   comment: Comment;
@@ -30,6 +31,7 @@ const CommentCard: React.FC<CommentCardProps> = ({
 }) => {
   const { showToast } = useToast();
   const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
 
   const handleCopyLink = async () => {
     const url = `${window.location.pathname}?comment=${comment.id}`;
@@ -41,103 +43,90 @@ const CommentCard: React.FC<CommentCardProps> = ({
     }
   };
 
-  const getSourceIcon = (type?: string) => {
-    switch (type) {
-      case 'Reddit': return <FaReddit className="text-orange-500" />;
-      case 'TikTok': return <FaTiktok className="text-pink-500" />;
-      case 'Twitter': return <FaTwitter className="text-blue-400" />;
-      case 'YouTube': return <FaYoutube className="text-red-500" />;
-      case 'Podcast': return <FaPodcast className="text-purple-500" />;
-      default: return null;
-    }
-  };
+  // Collapse logic
+  const isLong = comment.content.length > 300;
+  const displayContent = !isLong || expanded ? comment.content : comment.content.slice(0, 300) + '...';
 
   return (
-    <div className={`bg-zinc-900/50 rounded-lg p-4 transition-all duration-300 hover:bg-zinc-900/70 ${comment.pinned ? 'border-l-4 border-accent' : ''}`}>
-      {comment.pinned && (
-        <div className="flex items-center gap-1 text-accent text-sm mb-2">
-          <Pin size={14} />
-          <span>Pinned</span>
-        </div>
-      )}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <Image
-            src={comment.author.avatar_url || "/heychat.png"}
-            alt={`${comment.author.name}'s avatar`}
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">{comment.author.name}</span>
-              <span className="text-sm text-gray-400">@{comment.author.handle}</span>
+    <div className="mb-4">
+      <Card>
+        <div className="flex items-start gap-3 mb-2">
+          {/* Avatar */}
+          {comment.author?.avatar_url && (
+            <Avatar src={comment.author.avatar_url} />
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-bold text-sm">{comment.author?.name}</span>
+              <span className="text-xs text-gray-400">@{comment.author?.handle}</span>
+              {/* Source badge for ingested */}
+              {comment.source_type && <Badge label={comment.source_type} />}
             </div>
-            {comment.source_type && (
-              <div className="flex items-center gap-1 mt-1">
-                {getSourceIcon(comment.source_type)}
-                <span className="text-xs text-gray-400">{comment.source_type}</span>
-              </div>
+            <div className="text-xs text-gray-500 flex items-center gap-2 mb-1">
+              <span>{timeAgo(comment.created_at)}</span>
+              {isAdmin && (
+                <button
+                  onClick={onPin}
+                  className={`hover:bg-gray-200 hover:opacity-80 transition-colors ${comment.pinned ? 'text-accent' : ''} rounded p-1`}
+                  title={comment.pinned ? 'Unpin comment' : 'Pin comment'}
+                >
+                  <Pin size={14} />
+                </button>
+              )}
+              <button 
+                onClick={handleCopyLink}
+                className="hover:bg-gray-200 hover:opacity-80 transition-colors rounded p-1"
+                title="Copy link to comment"
+              >
+                <Share2 size={14} />
+              </button>
+              <MoreHorizontal size={16} />
+            </div>
+            <div className="text-sm text-white mb-1 transition-all duration-300 ease-in-out">
+              {displayContent}
+              {isLong && (
+                <button
+                  onClick={() => setExpanded((v) => !v)}
+                  className="ml-2 text-xs font-semibold text-blue-500 hover:underline hover:text-blue-600 transition-colors"
+                >
+                  {expanded ? 'Show Less' : 'Show More'}
+                </button>
+              )}
+            </div>
+            {comment.source_url && (
+              <a
+                href={comment.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline text-muted-foreground block mb-1 hover:text-blue-500 hover:underline transition-colors"
+              >
+                View Source
+              </a>
             )}
+            <div className="flex items-center gap-4 mt-1">
+              <button 
+                onClick={onLike}
+                className="flex items-center gap-1 hover:bg-gray-200 hover:opacity-80 transition-colors text-xs rounded p-1"
+              >
+                <Heart size={16} /> {comment.like_count}
+              </button>
+              <button 
+                onClick={onReply}
+                className="flex items-center gap-1 hover:bg-gray-200 hover:opacity-80 transition-colors text-xs rounded p-1"
+              >
+                <MessageCircle size={16} />
+                {comment.replies?.length ? ` ${comment.replies.length}` : ''}
+              </button>
+              <button 
+                onClick={onSave}
+                className={`flex items-center gap-1 hover:bg-gray-200 hover:opacity-80 transition-colors text-xs rounded p-1 ${isSaved ? 'text-accent' : ''}`}
+              >
+                <Bookmark size={16} />
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-gray-500">
-          <span className='text-sm'>{timeAgo(comment.created_at)}</span>
-          <button 
-            onClick={handleCopyLink}
-            className="hover:text-accent transition-colors"
-            title="Copy link to comment"
-          >
-            <Share2 size={18} />
-          </button>
-          {isAdmin && (
-            <button
-              onClick={onPin}
-              className={`hover:text-accent transition-colors ${comment.pinned ? 'text-accent' : ''}`}
-              title={comment.pinned ? 'Unpin comment' : 'Pin comment'}
-            >
-              <Pin size={18} />
-            </button>
-          )}
-          <MoreHorizontal size={20} />
-        </div>
-      </div>
-      <p className="text-white mb-4">
-        {comment.content}
-      </p>
-      {comment.source_url && (
-        <a
-          href={comment.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-xs text-accent/70 underline mb-2 hover:text-accent transition-colors"
-          style={{ marginTop: '-0.5rem' }}
-        >
-          View Source
-        </a>
-      )}
-      <div className="flex items-center gap-6 text-gray-400">
-        <button 
-          onClick={onLike}
-          className="flex items-center gap-2 hover:text-accent transition-colors"
-        >
-          <Heart size={18} /> {comment.likes_count}
-        </button>
-        <button 
-          onClick={onReply}
-          className="flex items-center gap-2 hover:text-accent transition-colors"
-        >
-          <MessageCircle size={18} />
-          {comment.replies?.length ? ` ${comment.replies.length}` : ''}
-        </button>
-        <button 
-          onClick={onSave}
-          className={`flex items-center gap-2 hover:text-accent transition-colors ${isSaved ? 'text-accent' : ''}`}
-        >
-          <Bookmark size={18} />
-        </button>
-      </div>
+      </Card>
     </div>
   );
 };

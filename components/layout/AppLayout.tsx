@@ -13,12 +13,13 @@ export default function AppLayout({
 }: AppLayoutProps) {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
+      {/* <Header /> ← sticky, black bg, z-50 */}
       <Header />
-      <main className="flex-grow pt-16 pb-16">
-        <div className="p-4 h-full">
-          {children}
-        </div>
+      {/* <main> ← max-w-md, centered, full height, bg-black */}
+      <main className="flex-1 overflow-auto">
+        {children}
       </main>
+      {/* <BottomNavigation /> ← fixed bottom-0, black bg */}
       <BottomNavigation />
     </div>
   );

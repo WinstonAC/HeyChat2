@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +12,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -20,19 +23,19 @@ export default function SignupPage() {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
-    console.log('Signup attempt with:', { email }); // Don't log password
-    // Placeholder for Supabase email signup logic
-    // try {
-    //   // const { error } = await supabase.auth.signUp({ email, password });
-    //   // if (error) throw error;
-    //   // setSuccess('Signup successful! Please check your email to confirm.');
-    //   // setEmail(''); setPassword(''); setConfirmPassword(''); // Clear form
-    // } catch (err: any) {
-    //   setError(err.message || 'Failed to sign up. Please try again.');
-    // }
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    setError('Signup functionality will be wired to Supabase later.');
-    setIsLoading(false);
+    
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      setSuccess('Signup successful! Please check your email to confirm.');
+      setEmail(''); 
+      setPassword(''); 
+      setConfirmPassword('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

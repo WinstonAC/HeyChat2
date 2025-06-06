@@ -30,7 +30,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 bg-gray-800 shadow-md text-white">
+    <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 bg-black border-b border-white/10 text-white">
       <div className="flex items-center">
         {isSubPage ? (
           <>

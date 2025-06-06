@@ -1,7 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .highlight {
+    animation: highlight-pulse 2s ease-out;
+  }
+}
+
+@keyframes highlight-pulse {
+  0% {
+    background-color: rgba(var(--accent-rgb), 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+:root {
+  --accent-rgb: 255, 215, 0;
+}
+
 body {
+  font-family: 'IBM Plex Sans', sans-serif;
   /* Add any global body styles here */
 }
