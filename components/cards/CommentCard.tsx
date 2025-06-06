@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Heart, MessageCircle, MoreHorizontal, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Share2, Pin, Bookmark } from 'lucide-react';
 import { FaReddit, FaTiktok, FaTwitter, FaYoutube, FaPodcast } from 'react-icons/fa';
 import type { Comment } from '@/lib/types';
 import { timeAgo } from '@/lib/utils';
@@ -11,9 +11,23 @@ import { useRouter } from 'next/navigation';
 
 interface CommentCardProps {
   comment: Comment;
+  onReply: () => void;
+  onPin: () => void;
+  onSave: () => void;
+  onLike: () => void;
+  isAdmin: boolean;
+  isSaved: boolean;
 }
 
-const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
+const CommentCard: React.FC<CommentCardProps> = ({
+  comment,
+  onReply,
+  onPin,
+  onSave,
+  onLike,
+  isAdmin,
+  isSaved
+}) => {
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -39,7 +53,13 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
   };
 
   return (
-    <div className="bg-zinc-900/50 rounded-lg p-4 transition-all duration-300 hover:bg-zinc-900/70">
+    <div className={`bg-zinc-900/50 rounded-lg p-4 transition-all duration-300 hover:bg-zinc-900/70 ${comment.pinned ? 'border-l-4 border-accent' : ''}`}>
+      {comment.pinned && (
+        <div className="flex items-center gap-1 text-accent text-sm mb-2">
+          <Pin size={14} />
+          <span>Pinned</span>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <Image
@@ -71,18 +91,51 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
           >
             <Share2 size={18} />
           </button>
+          {isAdmin && (
+            <button
+              onClick={onPin}
+              className={`hover:text-accent transition-colors ${comment.pinned ? 'text-accent' : ''}`}
+              title={comment.pinned ? 'Unpin comment' : 'Pin comment'}
+            >
+              <Pin size={18} />
+            </button>
+          )}
           <MoreHorizontal size={20} />
         </div>
       </div>
       <p className="text-white mb-4">
         {comment.content}
       </p>
+      {comment.source_url && (
+        <a
+          href={comment.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-xs text-accent/70 underline mb-2 hover:text-accent transition-colors"
+          style={{ marginTop: '-0.5rem' }}
+        >
+          View Source
+        </a>
+      )}
       <div className="flex items-center gap-6 text-gray-400">
-        <button className="flex items-center gap-2 hover:text-accent transition-colors">
+        <button 
+          onClick={onLike}
+          className="flex items-center gap-2 hover:text-accent transition-colors"
+        >
           <Heart size={18} /> {comment.likes_count}
         </button>
-        <button className="flex items-center gap-2 hover:text-accent transition-colors">
+        <button 
+          onClick={onReply}
+          className="flex items-center gap-2 hover:text-accent transition-colors"
+        >
           <MessageCircle size={18} />
+          {comment.replies?.length ? ` ${comment.replies.length}` : ''}
+        </button>
+        <button 
+          onClick={onSave}
+          className={`flex items-center gap-2 hover:text-accent transition-colors ${isSaved ? 'text-accent' : ''}`}
+        >
+          <Bookmark size={18} />
         </button>
       </div>
     </div>
