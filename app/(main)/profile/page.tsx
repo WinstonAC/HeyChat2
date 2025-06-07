@@ -17,7 +17,7 @@ export default function ProfilePage() {
       if (user) {
         setUser(user);
       } else {
-        router.push('/login'); // Redirect to login if no user
+        router.push('/login');
       }
       setLoading(false);
     };
@@ -30,36 +30,37 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="min-h-screen max-w-screen-sm mx-auto bg-black text-white px-4 pt-16 pb-20 pb-safe">
+        <Loading />
+      </div>
+    );
   }
   
   if (!user) {
-    // This case is unlikely due to the redirect, but good for robustness
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-xl text-red-500">Redirecting to login...</p>
+      <div className="min-h-screen max-w-screen-sm mx-auto bg-black text-white px-4 pt-16 pb-20 pb-safe">
+        <div className="text-center py-8">
+          <p className="text-red-500">Redirecting to login...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto bg-gray-800 shadow-xl rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">
-          User Profile
+    <div className="min-h-screen max-w-screen-sm mx-auto bg-black text-white px-4 pt-16 pb-20 pb-safe">
+      <div className="bg-zinc-900 rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">
+          Profile
         </h1>
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-gray-400">Email:</p>
+            <p className="text-sm text-zinc-400">Email</p>
             <p className="text-lg text-white">{user.email}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400">User ID:</p>
-            <p className="text-sm text-gray-300 break-all">{user.id}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-400">Last Signed In:</p>
-            <p className="text-sm text-gray-300">
+            <p className="text-sm text-zinc-400">Last Signed In</p>
+            <p className="text-sm text-zinc-300">
               {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
             </p>
           </div>
@@ -67,7 +68,7 @@ export default function ProfilePage() {
         <div className="mt-8 text-center">
           <button 
             onClick={handleLogout} 
-            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-150 ease-in-out disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-150 ease-in-out disabled:opacity-50"
           >
             Logout
           </button>

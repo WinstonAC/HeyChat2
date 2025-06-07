@@ -9,8 +9,8 @@ import { MessageSquare, Heart, Share2 } from 'lucide-react';
 import FilterPill from '@/components/ui/FilterPill';
 import EpisodeCard from '@/components/cards/EpisodeCard';
 
-export default function ShowPage({ params }: { params: { showId: string } }) {
-  const { showId } = params;
+export default function SeasonPage({ params }: { params: { id: string, seasonNumber: string } }) {
+  const { id, seasonNumber } = params;
   const [show, setShow] = useState<Show | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,15 +18,15 @@ export default function ShowPage({ params }: { params: { showId: string } }) {
   const [activeTab, setActiveTab] = useState('Episodes');
 
   useEffect(() => {
-    if (!showId) return;
+    if (!id || !seasonNumber) return;
 
-    const fetchShowData = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const { data: showData, error: showError } = await supabase
           .from('shows')
           .select('*')
-          .eq('id', showId)
+          .eq('id', id)
           .single();
         if (showError) throw showError;
         setShow(showData);
@@ -34,27 +34,27 @@ export default function ShowPage({ params }: { params: { showId: string } }) {
         const { data: episodesData, error: episodesError } = await supabase
           .from('episodes')
           .select('*')
-          .eq('show_id', showId)
-          .order('season_number', { ascending: true })
+          .eq('show_id', id)
+          .eq('season_number', parseInt(seasonNumber))
           .order('episode_number', { ascending: true });
         if (episodesError) throw episodesError;
         setEpisodes(episodesData || []);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch show data.');
+        setError(err.message || 'Failed to fetch data.');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchShowData();
-  }, [showId]);
+    fetchData();
+  }, [id, seasonNumber]);
 
   if (loading) return <Loading />;
-  if (error || !show) return <p className="p-4 text-center text-red-500">{error || 'Show not found.'}</p>;
+  if (error || !show) return <p className="p-4 text-center text-red-500">{error || 'Data not found.'}</p>;
 
   return (
-    <div className="pb-24"> {/* Padding bottom to avoid overlap with action buttons */}
+    <div className="pb-24">
       {show.poster_url && (
         <div className="relative w-full h-80">
           <Image src={show.poster_url} alt={`${show.title} poster`} layout="fill" objectFit="cover" />
@@ -64,7 +64,7 @@ export default function ShowPage({ params }: { params: { showId: string } }) {
 
       <div className="p-4 -mt-16 relative z-10">
         <p className="text-xs bg-zinc-800/80 backdrop-blur-sm text-white font-semibold px-3 py-1 rounded-full inline-block mb-2">
-          {show.platform ? `Available on ${show.platform}` : 'Platform not specified'}
+          Season {seasonNumber}
         </p>
         <h1 className="text-4xl font-bold">{show.title}</h1>
         <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
@@ -85,7 +85,7 @@ export default function ShowPage({ params }: { params: { showId: string } }) {
           {activeTab === 'Episodes' && (
             <div className="space-y-3">
               {episodes.map((episode) => (
-                <EpisodeCard key={episode.id} episode={episode} showId={showId} />
+                <EpisodeCard key={episode.id} episode={episode} showId={id} />
               ))}
             </div>
           )}

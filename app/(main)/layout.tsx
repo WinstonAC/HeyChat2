@@ -6,5 +6,9 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <AppLayout>
+      {children}
+    </AppLayout>
+  );
 } 

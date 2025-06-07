@@ -31,7 +31,7 @@ const HomeFeed = () => {
         if (error) throw error;
         setTrendingShows(data || []);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch trending shows.");
+        setError(err.message || 'Failed to fetch trending shows.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -41,32 +41,29 @@ const HomeFeed = () => {
   }, [activeTab]);
 
   return (
-    <div className="max-w-md mx-auto w-full min-h-screen bg-black text-white px-4 pt-16 pb-20">
+    <div className="min-h-screen max-w-screen-sm mx-auto bg-black text-white px-4 pt-16 pb-20 pb-safe">
       {/* Search Bar */}
       <div className="relative w-full mb-4">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-[#999999]" />
+          <Search className="h-5 w-5 text-zinc-500" />
         </div>
         <input
           type="text"
           placeholder="Search shows, episodes, or users"
-          className="w-full px-4 py-2 rounded-md bg-[#222222] border border-white/10 text-white placeholder-gray-500 pl-10"
+          className="w-full h-11 px-4 rounded-md bg-zinc-900 text-white placeholder-zinc-500 pl-10"
         />
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center space-x-8 border-b border-white/10 mb-4">
+      <div className="flex justify-between mb-6">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`py-2 text-sm font-medium transition-colors
-              ${
-                activeTab === tab
-                  ? 'text-[#9b87f5] border-b-2 border-[#9b87f5]'
-                  : 'text-[#999999] hover:text-white'
-              }
-            `}
+            className={`flex-1 text-xs py-2 transition-colors duration-200
+              ${activeTab === tab
+                ? 'text-accent border-b-2 border-accent'
+                : 'text-zinc-400 hover:text-white'}`}
           >
             {tab}
           </button>
@@ -79,17 +76,17 @@ const HomeFeed = () => {
         {error && <p className="text-center text-red-500">{error}</p>}
         {!loading && !error && activeTab === 'Trending' && (
           trendingShows.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 mx-auto mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {trendingShows.map((show) => (
                 <ShowCard key={show.id} show={show} />
               ))}
             </div>
           ) : (
-            <p className="text-center text-[#999999]">No trending shows right now.</p>
+            <p className="text-center text-zinc-500">No trending shows right now.</p>
           )
         )}
         {!loading && activeTab !== 'Trending' && (
-          <p className="text-center text-[#999999] py-8">{activeTab} feed coming soon...</p>
+          <p className="text-center text-zinc-500 py-8">{activeTab} feed coming soon...</p>
         )}
       </div>
     </div>

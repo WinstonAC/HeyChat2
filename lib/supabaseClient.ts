@@ -1,11 +1,50 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "./database.types";
 
-// STATUS CHECK: This file requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.
-// STATUS CHECK: No .env file was found in the project root. These variables must be set for Supabase client to initialize correctly.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Log environment variables (without exposing values)
+console.log("🔧 Supabase Configuration:", {
+  url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Found" : "❌ Missing",
+  anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Found" : "❌ Missing",
+  timestamp: new Date().toISOString()
+});
 
-if (!supabaseUrl) throw new Error("Missing SUPABASE_URL")
-if (!supabaseAnonKey) throw new Error("Missing SUPABASE_ANON_KEY")
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+export const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+// Verify connection
+const verifyConnection = async () => {
+  try {
+    const { data, error } = await supabase.from("comments").select("count").limit(1);
+    if (error) {
+      console.error("❌ Supabase connection test failed:", {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.log("✅ Supabase connection verified:", {
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    console.error("🚨 Unexpected connection error:", {
+      error: err,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+verifyConnection(); 

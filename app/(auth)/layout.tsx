@@ -1,9 +1,10 @@
 import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
-} 
+  return <AppLayout>{children}</AppLayout>;
+}
