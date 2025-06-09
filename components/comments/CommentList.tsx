@@ -7,7 +7,7 @@ import { Comment } from '@/lib/types';
 import Loading, { LoadingSkeleton } from '@/components/common/Loading';
 import CommentCard from '@/components/cards/CommentCard';
 import AddCommentForm from './AddCommentForm';
-import { FilterPill } from '@/components/ui/FilterPill';
+import FilterPill from '@/components/ui/FilterPill';
 
 interface CommentListProps {
   episodeId: string;
@@ -220,16 +220,7 @@ const CommentList: React.FC<CommentListProps> = ({ episodeId }) => {
       />
       
       {/* Source Type Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {sourceTypes.map((type) => (
-          <FilterPill
-            key={type}
-            label={type}
-            isActive={activeFilter === type}
-            onClick={() => setActiveFilter(type)}
-          />
-        ))}
-      </div>
+      {/* (Filter UI removed for MVP build stability) */}
       
       {loading && <LoadingSkeleton />}
       {error && <p className="text-center text-red-500">{error}</p>}
