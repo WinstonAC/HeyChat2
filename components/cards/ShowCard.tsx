@@ -10,7 +10,7 @@ interface ShowCardProps {
 
 const ShowCard: React.FC<ShowCardProps> = ({ show }) => {
   return (
-    <Link href={`/shows/${show.id}`} className="block">
+    <Link href={`/show/${show.id}`} className="block">
       <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 w-full">
         {show.poster_url ? (
           <Image
