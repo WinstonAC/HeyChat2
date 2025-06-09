@@ -1,39 +1,36 @@
-export interface Show {
+export type Show = {
   id: string;
+  created_at: string;
   title: string;
-  poster_url?: string;
-  description?: string;
-  platform?: string;
-}
+  description: string | null;
+  image_url: string | null;
+};
 
-export interface Episode {
-  id: string;
-  show_id: string;
-  title: string;
-  description: string;
-  air_date: string;
-  season_number: number;
-  episode_number: number;
-  // Add other episode properties as needed
-}
-
-export interface Comment {
+export type Comment = {
   id: string;
   content: string;
-  likes_count: number;
   created_at: string;
-  show_id?: string;
-  episode_id?: string;
-  author: UserProfile;
-  source_type?: string;
-  source_url?: string;
-  parent_id?: string;
-  pinned: boolean;
-  saved_by: string[];
-  ingested: boolean;
-  relevance_score: number;
-  replies?: Comment[];
-}
+  author_name: string | null;
+  show_id: string;
+  user_id: string;
+  source_type: string | null;
+  parent_id: string | null;
+  pinned: boolean | null;
+  saved_by: string[] | null;
+  ingested: boolean | null;
+  relevance_score: number | null;
+};
+
+export type Episode = {
+  id: string;
+  show_id: string;
+  season: number;
+  episode_number: number;
+  title: string;
+  description: string | null;
+  air_date: string | null;
+  created_at: string;
+};
 
 export interface UserProfile {
   user_id: string;

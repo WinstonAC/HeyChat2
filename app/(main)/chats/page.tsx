@@ -1,396 +1,234 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { ArrowLeft } from "lucide-react";
-import { useSearchParams, useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { Database } from "@/lib/database.types";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, MessageSquare } from 'lucide-react';
+import type { Show, Comment, Episode } from '@/lib/types';
 
-type Comment = Database["public"]["Tables"]["comments"]["Row"];
-
-export default function ChatsPage() {
+export default function Page() {
+  const searchParams = useSearchParams();
+  const showId = searchParams.get('show_id');
+  const episodeId = searchParams.get('episode_id');
+  
+  const [show, setShow] = useState<Show | null>(null);
+  const [episode, setEpisode] = useState<Episode | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [input, setInput] = useState("");
+  const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Get showId from URL parameters
-  const showId = searchParams?.get("show_id") || params?.id || "demo-show-id";
-
-  // Debug logging for routing parameters
   useEffect(() => {
-    console.log("🔍 Route parameters:", {
-      searchParams: Object.fromEntries(searchParams?.entries() || []),
-      params,
-      showId,
-      timestamp: new Date().toISOString()
-    });
-  }, [searchParams, params, showId]);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
 
-  // Validate showId
-  const isValidShowId = showId && showId !== "demo-show-id" && typeof showId === "string";
-
-  // Auth + session check
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchData = async () => {
+      if (!showId) return;
+
       try {
-        console.log("🔑 Checking user session:", {
-          showId,
-          isValidShowId,
-          timestamp: new Date().toISOString()
-        });
+        setLoading(true);
+        setError(null);
 
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("❌ Session fetch error:", {
-            error,
-            message: error.message,
-            status: error.status,
-            showId,
-            timestamp: new Date().toISOString()
-          });
-          return;
+        // Fetch show data
+        const { data: showData, error: showError } = await supabase
+          .from('shows')
+          .select('*')
+          .eq('id', showId)
+          .single();
+
+        if (showError) throw showError;
+        setShow(showData);
+
+        // Fetch episode data if episode_id is provided
+        if (episodeId) {
+          const { data: episodeData, error: episodeError } = await supabase
+            .from('episodes')
+            .select('*')
+            .eq('id', episodeId)
+            .single();
+
+          if (episodeError) throw episodeError;
+          setEpisode(episodeData);
         }
 
-        const currentUser = data?.session?.user;
-        if (!currentUser) {
-          console.warn("⚠️ No user session found:", {
-            session: data?.session,
-            showId,
-            timestamp: new Date().toISOString()
-          });
-          return;
-        }
+        // Fetch comments
+        const { data: commentsData, error: commentsError } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('show_id', showId)
+          .eq('episode_id', episodeId)
+          .order('created_at', { ascending: true });
 
-        console.log("✅ User session established:", {
-          id: currentUser.id,
-          email: currentUser.email,
-          metadata: currentUser.user_metadata,
-          showId,
-          isValidShowId,
-          timestamp: new Date().toISOString()
-        });
-        setUser(currentUser);
+        if (commentsError) throw commentsError;
+        setComments(commentsData || []);
+
+        // Subscribe to new comments
+        const channel = supabase
+          .channel('comments')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'comments',
+              filter: `show_id=eq.${showId} AND episode_id=eq.${episodeId}`,
+            },
+            (payload) => {
+              setComments((current) => [...current, payload.new as Comment]);
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
       } catch (err) {
-        console.error("🚨 Unexpected session error:", {
-          error: err,
-          showId,
-          timestamp: new Date().toISOString()
-        });
-      }
-    };
-
-    fetchSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("🟣 Auth state changed:", {
-        event: _event,
-        userId: session?.user?.id,
-        email: session?.user?.email,
-        metadata: session?.user?.user_metadata,
-        showId,
-        isValidShowId,
-        timestamp: new Date().toISOString()
-      });
-      if (session?.user) setUser(session.user);
-    });
-
-    return () => {
-      if (listener?.subscription) {
-        console.log("🧹 Cleaning up auth listener:", {
-          showId,
-          timestamp: new Date().toISOString()
-        });
-        listener.subscription.unsubscribe();
-      }
-    };
-  }, [showId, isValidShowId]);
-
-  // Fetch and subscribe to comments
-  useEffect(() => {
-    let subscription: any;
-
-    const loadComments = async () => {
-      setLoading(true);
-      setError(null);
-
-      // Skip for demo or invalid showId
-      if (!showId || showId === "demo-show-id") {
-        console.warn("⚠️ Skipping comments fetch for demo/invalid showId:", {
-          showId,
-          timestamp: new Date().toISOString()
-        });
-        setComments([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Verify user session before querying
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.warn("⚠️ No active session for comments query:", {
-            showId,
-            timestamp: new Date().toISOString()
-          });
-          setError("Please sign in to view comments");
-          setLoading(false);
-          return;
-        }
-
-        console.log("🔍 Fetching comments:", {
-          showId,
-          userId: session.user.id,
-          email: session.user.email,
-          timestamp: new Date().toISOString()
-        });
-
-        const { data, error } = await supabase
-          .from("comments")
-          .select(`
-            id,
-            content,
-            created_at,
-            author_name,
-            show_id,
-            user_id,
-            source_type,
-            parent_id,
-            pinned,
-            saved_by,
-            ingested,
-            relevance_score
-          `)
-          .eq("show_id", showId)
-          .order("created_at", { ascending: true });
-
-        if (error) {
-          console.error("❌ Failed to fetch comments:", {
-            error,
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            showId,
-            userId: session.user.id,
-            timestamp: new Date().toISOString()
-          });
-          setError(error.message || "Failed to load comments");
-        } else {
-          console.log("✅ Comments loaded:", {
-            count: data?.length || 0,
-            firstComment: data?.[0],
-            showId,
-            userId: session.user.id,
-            timestamp: new Date().toISOString()
-          });
-          setComments(data || []);
-        }
-      } catch (err: any) {
-        console.error("🚨 Unexpected fetch error:", {
-          error: err,
-          message: err.message,
-          stack: err.stack,
-          showId,
-          timestamp: new Date().toISOString()
-        });
-        setError(err.message || "Failed to load comments");
+        console.error('Error fetching data:', err);
+        setError('Failed to load chat');
       } finally {
         setLoading(false);
       }
     };
 
-    loadComments();
+    fetchData();
+  }, [showId, episodeId]);
 
-    // Only set up subscription if we have a real showId
-    if (showId && showId !== "demo-show-id") {
-      console.log("📡 Setting up real-time subscription:", {
-        showId,
-        timestamp: new Date().toISOString()
-      });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !isAuthenticated) return;
 
-      subscription = supabase
-        .channel("comments-chat")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "comments" },
-          (payload) => {
-            if (payload.new.show_id === showId) {
-              console.log("📨 New comment received:", {
-                comment: payload.new,
-                showId,
-                timestamp: new Date().toISOString()
-              });
-              setComments((prev) => [...prev, payload.new as Comment]);
-            }
-          }
-        )
-        .subscribe((status) => {
-          console.log("📡 Subscription status:", {
-            status,
-            showId,
-            timestamp: new Date().toISOString()
-          });
-        });
-    }
-
-    return () => {
-      if (subscription) {
-        console.log("🧹 Cleaning up subscription:", {
-          showId,
-          timestamp: new Date().toISOString()
-        });
-        supabase.removeChannel(subscription);
-      }
-    };
-  }, [showId]);
-
-  const handleInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && input.trim()) {
-      // Log current state
-      console.log("📝 Comment submission attempt:", {
-        hasUser: !!user,
-        userId: user?.id,
-        userEmail: user?.email,
-        userMetadata: user?.user_metadata,
-        showId,
-        isValidShowId,
-        inputLength: input.trim().length,
-        timestamp: new Date().toISOString()
-      });
-
-      if (!user?.id) {
-        console.error("❌ No user available for comment insert:", {
-          user,
-          timestamp: new Date().toISOString()
-        });
-        return;
+    try {
+      setIsSubmitting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
       }
 
-      // Validate showId
-      if (!isValidShowId) {
-        console.error("❌ Invalid showId for comment insert:", {
-          showId,
-          isValidShowId,
-          searchParams: Object.fromEntries(searchParams?.entries() || []),
-          params,
-          timestamp: new Date().toISOString()
-        });
-        return;
-      }
-
-      const payload = {
-        content: input.trim(),
-        user_id: user.id,
+      const { error } = await supabase.from('comments').insert({
         show_id: showId,
-        author_name: user.email || user.user_metadata?.full_name || "Anonymous",
-        created_at: new Date().toISOString()
-      };
-
-      console.log("📦 Attempting comment insert:", {
-        payload,
-        userId: user.id,
-        showId,
-        isValidShowId,
-        timestamp: new Date().toISOString()
+        episode_id: episodeId,
+        user_id: session.user.id,
+        content: newComment.trim(),
       });
 
-      try {
-        const { data, error } = await supabase
-          .from("comments")
-          .insert([payload])
-          .select()
-          .single();
-
-        if (error) {
-          console.error("❌ Comment insert failed:", {
-            error,
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            payload,
-            timestamp: new Date().toISOString()
-          });
-          return;
-        }
-
-        console.log("✅ Comment submitted successfully:", {
-          data,
-          timestamp: new Date().toISOString()
-        });
-        setInput("");
-        inputRef.current?.focus();
-      } catch (err) {
-        console.error("🚨 Unexpected error during comment insert:", {
-          error: err,
-          payload,
-          timestamp: new Date().toISOString()
-        });
-      }
+      if (error) throw error;
+      setNewComment('');
+    } catch (err) {
+      console.error('Error submitting comment:', err);
+      setError('Failed to submit comment');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="flex flex-col flex-1">
-      <header className="h-14 flex items-center backdrop-blur bg-black/95 sticky top-0 z-50">
-        <button
-          aria-label="Go back"
-          className="w-10 h-10 flex items-center justify-center"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
-        <h1 className="text-lg font-semibold flex-1 text-center -ml-10">Show Chat</h1>
-      </header>
+  if (!showId) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <p>Invalid show ID</p>
+        <Link href="/" className="text-purple-500 hover:text-purple-400">
+          Return to Home
+        </Link>
+      </div>
+    );
+  }
 
-      <div className="h-14 flex items-center bg-black px-4">
-        <span className="text-sm font-semibold text-white">Comments ({comments.length})</span>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-3/4 bg-zinc-800 rounded" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-zinc-800 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !show) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <p className="text-red-500">{error || 'Show not found'}</p>
+        <Link href="/" className="text-purple-500 hover:text-purple-400">
+          Return to Home
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      {/* Sticky Header */}
+      <div className="sticky top-0 bg-black border-b border-gray-800 p-4 z-10">
+        <div className="flex items-center gap-4">
+          <Link href={`/show/${showId}`} className="text-zinc-400 hover:text-white">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div>
+            <h1 className="text-lg font-semibold truncate">{show.title}</h1>
+            {episode && (
+              <p className="text-sm text-zinc-400">
+                Episode {episode.episode_number}: {episode.title}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6 py-4 px-4">
-        {loading ? (
-          <p className="text-center text-zinc-400">Loading...</p>
-        ) : error ? (
-          <p className="text-center text-red-500">{error}</p>
-        ) : comments.length === 0 ? (
-          <p className="text-center text-zinc-400">No comments yet. Start the conversation!</p>
-        ) : (
+      {/* Comments Feed */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(100vh-200px)]">
+        {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment.id} className="pb-4">
-              <p className="text-sm font-medium">{comment.author_name || "User"}</p>
-              <p className="text-sm text-zinc-300 mt-1">{comment.content}</p>
-              <p className="text-xs text-zinc-500 mt-1">
-                {new Date(comment.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+            <div key={comment.id} className="bg-zinc-900 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-300">{comment.content}</p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
           ))
+        ) : (
+          <p className="text-center text-zinc-500 py-8">No comments yet. Be the first to join the discussion!</p>
         )}
       </div>
 
-      <footer className="min-h-[72px] py-3 bg-black/90 backdrop-blur sticky bottom-0 z-[60] px-4">
-        <div className="flex items-center gap-2">
+      {/* Comment Input */}
+      <div className="sticky bottom-0 bg-black border-t border-gray-800 p-4">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <input
-            ref={inputRef}
             type="text"
-            placeholder={user ? "Type a comment..." : "Sign in to comment"}
-            className="flex-1 h-10 rounded-full px-4 bg-zinc-900 text-white text-sm outline-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleInputKeyDown}
-            autoFocus
-            disabled={!user}
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder={isAuthenticated ? "Add a comment..." : "Sign in to comment"}
+            disabled={!isAuthenticated || isSubmitting}
+            className="flex-1 px-4 py-2 rounded-lg bg-zinc-900 text-white border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            aria-label="Comment input"
           />
-        </div>
-      </footer>
+          <Button
+            type="submit"
+            disabled={!isAuthenticated || isSubmitting || !newComment.trim()}
+            className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+            aria-label="Submit comment"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 } 
