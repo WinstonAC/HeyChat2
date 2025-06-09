@@ -19,14 +19,29 @@ export default function ChatsPage() {
   const searchParams = useSearchParams();
   const params = useParams();
 
+  // Get showId from URL parameters
   const showId = searchParams?.get("show_id") || params?.id || "demo-show-id";
+
+  // Debug logging for routing parameters
+  useEffect(() => {
+    console.log("🔍 Route parameters:", {
+      searchParams: Object.fromEntries(searchParams?.entries() || []),
+      params,
+      showId,
+      timestamp: new Date().toISOString()
+    });
+  }, [searchParams, params, showId]);
+
+  // Validate showId
+  const isValidShowId = showId && showId !== "demo-show-id" && typeof showId === "string";
 
   // Auth + session check
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        console.log("🔑 Fetching user session:", {
+        console.log("🔑 Checking user session:", {
           showId,
+          isValidShowId,
           timestamp: new Date().toISOString()
         });
 
@@ -55,7 +70,9 @@ export default function ChatsPage() {
         console.log("✅ User session established:", {
           id: currentUser.id,
           email: currentUser.email,
+          metadata: currentUser.user_metadata,
           showId,
+          isValidShowId,
           timestamp: new Date().toISOString()
         });
         setUser(currentUser);
@@ -75,7 +92,9 @@ export default function ChatsPage() {
         event: _event,
         userId: session?.user?.id,
         email: session?.user?.email,
+        metadata: session?.user?.user_metadata,
         showId,
+        isValidShowId,
         timestamp: new Date().toISOString()
       });
       if (session?.user) setUser(session.user);
@@ -90,7 +109,7 @@ export default function ChatsPage() {
         listener.subscription.unsubscribe();
       }
     };
-  }, [showId]);
+  }, [showId, isValidShowId]);
 
   // Fetch and subscribe to comments
   useEffect(() => {
@@ -233,8 +252,35 @@ export default function ChatsPage() {
 
   const handleInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim()) {
+      // Log current state
+      console.log("📝 Comment submission attempt:", {
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        userMetadata: user?.user_metadata,
+        showId,
+        isValidShowId,
+        inputLength: input.trim().length,
+        timestamp: new Date().toISOString()
+      });
+
       if (!user?.id) {
-        console.error("❌ No user available for comment insert");
+        console.error("❌ No user available for comment insert:", {
+          user,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      // Validate showId
+      if (!isValidShowId) {
+        console.error("❌ Invalid showId for comment insert:", {
+          showId,
+          isValidShowId,
+          searchParams: Object.fromEntries(searchParams?.entries() || []),
+          params,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
@@ -242,19 +288,50 @@ export default function ChatsPage() {
         content: input.trim(),
         user_id: user.id,
         show_id: showId,
-        author_name: user.email ?? "Anonymous",
+        author_name: user.email || user.user_metadata?.full_name || "Anonymous",
+        created_at: new Date().toISOString()
       };
 
-      console.log("📦 Inserting payload:", payload);
+      console.log("📦 Attempting comment insert:", {
+        payload,
+        userId: user.id,
+        showId,
+        isValidShowId,
+        timestamp: new Date().toISOString()
+      });
 
-      const { error } = await supabase.from("comments").insert([payload]);
+      try {
+        const { data, error } = await supabase
+          .from("comments")
+          .insert([payload])
+          .select()
+          .single();
 
-      if (error) {
-        console.error("❌ Comment insert failed:", error);
-      } else {
-        console.log("✅ Comment submitted");
+        if (error) {
+          console.error("❌ Comment insert failed:", {
+            error,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+            payload,
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
+
+        console.log("✅ Comment submitted successfully:", {
+          data,
+          timestamp: new Date().toISOString()
+        });
         setInput("");
         inputRef.current?.focus();
+      } catch (err) {
+        console.error("🚨 Unexpected error during comment insert:", {
+          error: err,
+          payload,
+          timestamp: new Date().toISOString()
+        });
       }
     }
   };

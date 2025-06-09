@@ -3,14 +3,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import type { Comment } from '@/lib/types';
+import { Comment } from '@/lib/types';
 import Loading, { LoadingSkeleton } from '@/components/common/Loading';
 import CommentCard from '@/components/cards/CommentCard';
 import AddCommentForm from './AddCommentForm';
-import FilterPill from '@/components/ui/FilterPill';
+import { FilterPill } from '@/components/ui/FilterPill';
 
 interface CommentListProps {
   episodeId: string;
+  refreshTrigger?: number;
 }
 
 const CommentList: React.FC<CommentListProps> = ({ episodeId }) => {
@@ -80,7 +81,7 @@ const CommentList: React.FC<CommentListProps> = ({ episodeId }) => {
       const commentMap = new Map<string, Comment>();
       const rootComments: Comment[] = [];
 
-      data.forEach((comment: any) => {
+      data.forEach((comment: Comment) => {
         const commentWithReplies = { ...comment, replies: [] };
         commentMap.set(comment.id, commentWithReplies);
 
@@ -96,8 +97,9 @@ const CommentList: React.FC<CommentListProps> = ({ episodeId }) => {
       });
 
       setComments(rootComments);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch comments.');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to fetch comments.');
     } finally {
       setLoading(false);
     }

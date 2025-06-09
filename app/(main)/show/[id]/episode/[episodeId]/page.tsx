@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import type { Show, Episode } from '@/lib/types';
 import Loading from '@/components/common/Loading';
@@ -9,8 +10,11 @@ import { MessageSquare, Heart, Share2 } from 'lucide-react';
 import FilterPill from '@/components/ui/FilterPill';
 import EpisodeCard from '@/components/cards/EpisodeCard';
 
-export default function EpisodePage({ params }: { params: { id: string, episodeId: string } }) {
-  const { id, episodeId } = params;
+export default function EpisodePage() {
+  const params = useParams();
+  const id = params.id as string;
+  const episodeId = params.episodeId as string;
+  
   const [show, setShow] = useState<Show | null>(null);
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
