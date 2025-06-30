@@ -14,5 +14,5 @@ CREATE POLICY "Allow insert for authenticated users" ON public.shows FOR INSERT 
 
 -- Insert demo show if not exists
 INSERT INTO public.shows (id, title, created_at)
-SELECT 'demo-show-id', 'Demo Show', now()
-WHERE NOT EXISTS (SELECT 1 FROM public.shows WHERE id = 'demo-show-id'); 
+SELECT gen_random_uuid(), 'Demo Show', now()
+WHERE NOT EXISTS (SELECT 1 FROM public.shows WHERE title = 'Demo Show'); 

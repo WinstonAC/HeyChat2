@@ -39,10 +39,10 @@ USING (true);
 -- Insert demo show
 INSERT INTO public.shows (id, title, description, created_at)
 SELECT 
-    'demo-show-id',
+    gen_random_uuid(),
     'Demo Show',
     'This is a demo show for testing purposes',
     NOW()
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.shows WHERE id = 'demo-show-id'
+    SELECT 1 FROM public.shows WHERE title = 'Demo Show'
 ); 
